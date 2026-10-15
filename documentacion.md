@@ -677,33 +677,6 @@ En una consigna posterior se utilizará un modelo estadístico de regresión par
 
 ---
 
-## Estado de avance del TP11
-
-### Consignas desarrolladas
-
-- Consigna 1: Requerimientos funcionales y no funcionales.
-- Consigna 2: Diseño de casos de prueba.
-- Consigna 3: Matriz de trazabilidad RTMX.
-- Consigna 4: Inspección estática del código.
-- Consigna 5: Inspección de casos de prueba.
-- Consigna 6: Ejecución de pruebas unitarias.
-- Consigna 7: Ejecución de pruebas funcionales.
-- Consigna 8: Consolidación de sesiones y resultados.
-- Consigna 9: Cálculo del PCE.
-- Consigna 10: Densidad de defectos.
-
-### Próximas actividades
-
-- Análisis del parámetro TEP de Kanban.
-- Regresión y proyección estadística de defectos.
-- Estimación de defectos remanentes.
-- Modelos de garantía y calidad de software.
-- Desarrollo del conversor JSON a CSV.
-- Integración continua y herramientas de calidad.
-- Gestión de deuda técnica.
-- Análisis del efecto de las multas en el equilibrio de garantía.
-
-
 ## Consigna 11 - Kanban y parámetro TEP
 
 ### Definición
@@ -757,3 +730,362 @@ que se pueden completar adecuadamente.
 
 Fuente: Álvaro Ruiz de Mendarozqueta,
 "Kanban para uso genérico", versión 1.1, marzo de 2015.
+
+---
+
+## Consigna 12 - Proyección de defectos con regresión
+
+### Datos proporcionados por la cátedra
+
+Se utilizó un modelo aproximado de crecimiento de detección de defectos, tomando como referencia el taller `Taller_Defectos.ipynb` y la implementación `regresion_defectos.py`.
+
+| Día | Defectos detectados | Acumulado |
+|---|---:|---:|
+| 0 | 9 | 9 |
+| 1 | 18 | 27 |
+| 2 | 5 | 32 |
+| 3 | 7 | 39 |
+| 4 | 23 | 62 |
+| 5 | 2 | 64 |
+| 6 | 8 | 72 |
+
+### Modelo y resultados
+
+Se trabajó con una curva exponencial de detección, del tipo:
+
+\[
+\mu(t) = \mu_0(1-e^{-\lambda_0t})
+\]
+
+donde `μ(t)` representa los defectos acumulados detectados hasta el tiempo `t`, `μ0` representa el total asintótico estimado y `λ0` representa un parámetro de velocidad del modelo. La implementación utilizó una aproximación mediante regresión sobre los datos.
+
+La ejecución local de `regresion_defectos.py` produjo:
+
+| Indicador | Resultado |
+|---|---:|
+| Defectos observados | 72 |
+| Tasa inicial reportada (`λ0`) | 11,29 |
+| Defectos totales estimados (`μ0`) | 98,12 |
+| Defectos remanentes estimados | 26,12 |
+| Coeficiente `R²` | 0,0939 |
+
+**Interpretación:** el modelo proyecta aproximadamente **98,12 defectos totales** y **26,12 remanentes** respecto de los 72 observados. Sin embargo, un `R²` de 0,0939 indica un **ajuste muy débil**. La proyección debe considerarse ilustrativa y no una estimación suficientemente fiable para decidir una liberación de software.
+
+Los defectos diarios no presentan una disminución ordenada: el día 4 tiene 23 defectos, por encima de los días anteriores. Esa irregularidad contribuye a la baja capacidad explicativa del ajuste.
+
+---
+
+## Consigna 13 - Regresión sobre las sesiones de Collatz y defectos remanentes
+
+### Datos obtenidos en la práctica
+
+Se consideran únicamente los **cinco defectos únicos de implementación**, contabilizados en su fase de primera detección:
+
+| Etapa o sesión | Nuevos defectos únicos |
+|---|---:|
+| Inspección estática inicial | 4 |
+| Primera sesión de pruebas unitarias (S1) | 1 |
+| Sesiones posteriores de pruebas unitarias | 0 |
+| Sesiones de pruebas funcionales | 0 |
+| **Total observado** | **5** |
+
+Esta distribución no debe confundirse con la cantidad de **fallas** por ejecución: por ejemplo, S5 registró ocho pruebas fallidas, pero no ocho defectos únicos nuevos.
+
+### Posibilidad de estimación estadística
+
+El conjunto de datos tiene **muy pocas observaciones positivas**, está dominado por ceros y corresponde a una aplicación educativa extremadamente pequeña. En estas condiciones no resulta defendible extrapolar una curva exponencial confiable para obtener `μ0` en Collatz.
+
+Por lo tanto:
+
+- Defectos únicos observados: **5**.
+- Defectos únicos observados que quedaron sin corregir al finalizar las pruebas: **0**, según los casos ejecutados.
+- **`μ0` estadístico:** no se dispone de una estimación fiable con esta muestra.
+- **`μr = μ0 - Σμi`:** no puede calcularse un valor estadístico fiable sin un `μ0` defendible.
+
+Si se utiliza **solo como supuesto ilustrativo** que `μ0 = 5`, entonces `μr = 5 - 5 = 0`. Esto **no prueba** que no existan defectos latentes.
+
+### Tamaño final del código
+
+El tamaño final registrado de `collatz.py` fue **37 LOC**, frente a las 18 LOC originales proporcionadas en la consigna.
+
+Comando equivalente en PowerShell:
+
+```powershell
+(Get-Content collatz.py | Measure-Object -Line).Lines
+```
+
+El crecimiento refleja principalmente la incorporación de entrada por teclado, validaciones, manejo de errores y separación de responsabilidades.
+
+---
+
+## Consigna 14 - Relación entre PCE y duración óptima de las pruebas para otorgar garantía
+
+El modelo de garantía relaciona el costo de ejecutar actividades de verificación y validación (V&V) con el costo futuro de atender defectos que llegan al producto liberado.
+
+Si aumenta el **PCE** del proceso, se contienen más defectos antes de la liberación y disminuye la cantidad esperada de defectos que deberá cubrir la garantía.
+
+En igualdad de condiciones de costo, productividad y riesgo, un PCE mayor tiende a **reducir el tiempo óptimo de prueba** necesario para alcanzar un nivel de riesgo y costo aceptable. Esto ocurre porque una detección más eficaz permite lograr el mismo objetivo de calidad con menos esfuerzo adicional de búsqueda de defectos.
+
+Esta conclusión es **cualitativa**. El tiempo óptimo no depende únicamente del PCE: también intervienen el costo de las pruebas, la gravedad de los defectos, los costos de reparación y las obligaciones de garantía. No significa que mejorar el PCE justifique eliminar las pruebas finales.
+
+---
+
+## Consigna 15 - Cálculo de defectos a partir de la línea de base organizacional
+
+### Datos del enunciado
+
+- Efectividad de contención del proceso: `PCE = 89% = 0,89`.
+- Densidad residual al liberar: `δr = 0,12 defectos/FP`.
+- Tamaño del producto: `S = 100 FP`.
+
+### a) Defectos totales esperados (`μ0`)
+
+Primero se calculan los defectos esperados al liberar:
+
+\[
+\mu_r = \delta_r S = 0,12 \times 100 = 12
+\]
+
+Como la fracción no contenida es `1 - PCE = 0,11`:
+
+\[
+\mu_0 = \frac{\mu_r}{1-PCE}
+       = \frac{12}{0,11}
+       \approx 109,09
+\]
+
+**Resultado:** alrededor de **109 defectos totales esperados** según la línea de base organizacional.
+
+### b) Densidad al finalizar la construcción (`δ0`)
+
+\[
+\delta_0 = \frac{\mu_0}{S}
+         = \frac{109,09}{100}
+         \approx 1,0909\ \text{defectos/FP}
+\]
+
+**Resultado:** **1,0909 defectos/FP**.
+
+### c) Defectos a detectar durante V&V
+
+\[
+\mu_{\mathrm{V\&V}} = \mu_0-\mu_r
+                   = 109,09 - 12
+                   = 97,09
+\]
+
+**Resultado:** se deberían planificar aproximadamente **97 defectos detectados durante V&V** para mantener la performance histórica.
+
+### d) Interpretación de 60 defectos encontrados en los tres primeros días
+
+Se detectaron `20 × 3 = 60` defectos durante los primeros tres días de V&V.
+
+En términos del objetivo de detección histórico:
+
+\[
+\frac{60}{97,09}\times 100 \approx 61,8\%
+\]
+
+Es decir, en tres días ya se detectó cerca del **61,8%** de los defectos que históricamente se esperaba encontrar durante todo V&V.
+
+Esto puede interpretarse de al menos dos maneras:
+
+1. El proceso de prueba está detectando defectos con gran rapidez y concentra una proporción importante de los hallazgos al principio.
+2. El producto tiene una cantidad inicial de defectos mayor que la esperada, de modo que el número total podría superar la línea de base.
+
+**No alcanza la información para afirmar cuál explicación es la correcta.** Debe observarse la tendencia en los días siguientes, el esfuerzo de prueba empleado y la severidad de los hallazgos. Si la tasa de 20 defectos diarios continuara durante demasiado tiempo, aumentaría la sospecha de que el total supera lo históricamente esperable.
+
+---
+
+## Consigna 16 - Conversor JSON a CSV mediante filtro
+
+### Objetivo y diseño
+
+Se implementó `json2csv`, una herramienta Python de línea de comandos que transforma una **lista JSON de objetos** en contenido CSV.
+
+Opciones admitidas:
+
+| Opción | Función |
+|---|---|
+| `-i`, `--input` | Archivo JSON de entrada |
+| `-o`, `--output` | Archivo CSV de salida |
+| `-d`, `--delimiter` | Delimitador CSV; por defecto `,` |
+
+Al omitir `-i` se utiliza `stdin`; al omitir `-o` se utiliza `stdout`. Esto permite utilizarlo como **filtro** de una tubería de comandos.
+
+El proyecto se estructuró con **Cookiecutter** y se ejecuta como módulo instalado:
+
+```powershell
+cd json2csv
+python -m pip install -e .
+python -m json2csv -i ejemplo.json -o resultado.csv
+python -m json2csv -i ejemplo.json -o resultado_pyc.csv -d ";"
+Get-Content ejemplo.json -Raw | python -m json2csv
+```
+
+**Precisión respecto de la consigna:** el enunciado propone `python json2csv.py ...`; la implementación comprobada utiliza `python -m json2csv ...`, con las mismas opciones y comportamiento de entrada/salida. Si se exige literalmente el nombre del archivo invocado, queda pendiente agregar y comprobar un lanzador `json2csv.py`.
+
+### Tratamiento de entradas
+
+Se comprobaron las siguientes condiciones:
+
+- JSON válido con varios registros.
+- Columnas diferentes entre los objetos.
+- Delimitador personalizado.
+- Entrada y salida por archivos.
+- Entrada y salida estándar.
+- Archivo inexistente.
+- JSON sintácticamente inválido.
+- Delimitador inválido de longitud mayor a un carácter.
+
+El conversor utiliza mensajes de error controlados y un código de salida distinto de cero para los errores contemplados. El terminador de filas se configuró explícitamente como `\n` para evitar líneas vacías adicionales en Windows.
+
+---
+
+## Consigna 17 - Garantía de calidad del conversor e integración continua
+
+### Entorno y estructura
+
+El desarrollo se realizó dentro de un entorno virtual de Python en Windows, con el paquete alojado en `json2csv/` y su implementación principal en `src/json2csv/`.
+
+Se incorporaron los siguientes artefactos:
+
+| Archivo o elemento | Función |
+|---|---|
+| `pyproject.toml` | Metadatos, versión `0.1.0`, dependencias y configuración |
+| `requirements.txt` | Instalación del paquete y herramientas de desarrollo |
+| `README.md` | Instalación, uso y comandos de comprobación |
+| `CHANGELOG.md` | Registro de cambios de la versión `0.1.0` |
+| `CONTEXT.md` | Registro general de asistencia mediante IA |
+| `LICENSE` | Archivo de licencia MIT generado por la plantilla |
+| `VERSION` | Identificador `0.1.0` |
+| `BUILD` | Identificador `1` |
+| `tests/test_json2csv.py` | Pruebas automatizadas |
+| `.github/workflows/calidad.yml` | Configuración del control automático en GitHub |
+
+### Pruebas y cobertura
+
+Comando utilizado:
+
+```powershell
+python -m pytest tests/test_json2csv.py --cov=json2csv --cov-report=term-missing
+```
+
+Resultado observado en el entorno local:
+
+- **13 pruebas aprobadas de 13 ejecutadas.**
+- **88,33% de cobertura total**, incluyendo cobertura de ramas según configuración.
+- Límite mínimo establecido en `pyproject.toml`: **85%**.
+- La herramienta informó expresamente: `Required test coverage of 85.0% reached`.
+
+### Controles de calidad y seguridad
+
+| Herramienta | Resultado de la revisión local |
+|---|---|
+| Ruff | `All checks passed!` |
+| Black | `5 files would be left unchanged` |
+| MyPy | Sin errores en 4 archivos fuente |
+| Pyright | 0 errores, 0 advertencias |
+| Bandit | `No issues identified` |
+
+Comandos principales:
+
+```powershell
+python -m ruff check src tests
+python -m black --check src tests
+python -m mypy src/json2csv
+python -m pyright src/json2csv
+python -m bandit -r src/json2csv
+```
+
+**PEP 8:** comprobado parcialmente mediante Ruff y Black. **PEP 257:** aunque existen docstrings, no se aportó una ejecución específica de un conjunto completo de reglas PEP 257; este control debe verificarse por separado antes de declararlo cumplido de forma exhaustiva.
+
+### GitHub y CI/CD
+
+Se creó y publicó el repositorio:
+
+`https://github.com/matibaissetto/tp11_is2`
+
+- Rama publicada: `master`.
+- Primer commit: `97a111a`.
+- Mensaje del commit: `Entrega TP11 IS2`.
+- Se subieron los archivos de Collatz, pruebas, documentación, regresión y conversor.
+- Se ubicó el workflow principal en `.github/workflows/calidad.yml` de la raíz.
+- Sus comandos se ejecutan con directorio de trabajo `json2csv`.
+- Se informó visualmente un indicador de éxito en GitHub Actions; para documentar el resultado concreto del workflow debe consultarse el detalle de la ejecución.
+
+### Generación de documentación automatizada
+
+Cookiecutter proporcionó una estructura `docs/` y configuraciones de documentación. No obstante, la consigna exige **pdoc o Sphinx** y su generación/actualización con cada PR exitoso.
+
+**Pendiente de validación:** no hay constancia de una ejecución de pdoc o Sphinx ni de su integración efectiva con cada PR. No debe considerarse satisfecho este requisito solo por disponer de Markdown y la estructura de `docs/`.
+
+### Alcance de la verificación
+
+Las comprobaciones descritas prueban el funcionamiento de los escenarios implementados y de los controles ejecutados, pero no demuestran ausencia absoluta de defectos ni cobertura completa de entradas JSON posibles.
+
+---
+
+## Consigna 18 - Deuda técnica y proceso de calidad
+
+La deuda técnica representa trabajo técnico pendiente que, si se acumula, reduce la capacidad futura de un equipo para producir valor. Puede ser **deliberada**, cuando se difiere una mejora por una decisión de negocio, o **involuntaria**, cuando el retrabajo aparece por defectos, insuficiente validación y malas decisiones técnicas.
+
+Desde el proceso de calidad, los factores que más ayudan a controlarla son:
+
+1. **Prevención de defectos:** revisar requisitos, diseño y código reduce el número de problemas que posteriormente requieren retrabajo.
+2. **Inspecciones y pruebas tempranas:** descubrir errores antes de la entrega disminuye el costo y la complejidad de corregirlos.
+3. **PCE alto:** contener defectos dentro de las fases donde se originan impide que se propaguen a etapas posteriores o a producción.
+4. **Automatización de controles y regresión:** pruebas, análisis estático e integración continua permiten identificar rápidamente defectos incorporados por cambios.
+5. **Visibilidad y priorización de deuda:** registrar, estimar y atender las tareas de corrección evita que compitan indefinidamente con nuevas funciones.
+6. **Sostenibilidad de la velocidad:** limitar el trabajo pendiente y reservar capacidad para reparaciones impide que todo el esfuerzo de un sprint se consuma en corregir problemas antiguos.
+
+### Relación con la velocidad del proyecto
+
+El material teórico de la cátedra explica que el retrabajo obligatorio reduce la **velocidad efectiva**, porque parte de la capacidad del equipo se utiliza en corregir funcionalidades previamente desarrolladas, en lugar de entregar nuevas funcionalidades.
+
+Si la deuda pendiente llega a consumir toda la velocidad disponible, el proyecto puede avanzar muy poco o dejar de reducir su backlog. Por eso, mantener un PCE alto contribuye a reducir la generación de deuda técnica involuntaria y preservar la capacidad productiva.
+
+**Aclaración de fuentes:** estas conclusiones se fundamentan en las clases de calidad y deuda técnica de la cátedra. No se verificó directamente el texto íntegro del artículo externo «Agile and software engineering, an invisible bond», por lo que no se atribuyen a ese artículo afirmaciones textuales específicas.
+
+---
+
+## Consigna 19 - Efecto de una multa en el equilibrio económico de garantía
+
+En un modelo simplificado de garantía, la organización busca equilibrar:
+
+- El **costo preventivo** de continuar probando y corrigiendo antes de la entrega.
+- El **costo esperado posterior a la liberación** de atender defectos durante el período de garantía.
+
+Sin multas, el tiempo óptimo de test se encuentra donde el beneficio esperado de seguir eliminando defectos compensa el costo adicional de las pruebas.
+
+### Efecto de introducir una multa
+
+Una multa contractual por defectos, incumplimiento de calidad o fallas durante la garantía **aumenta el costo esperado de liberar el producto con defectos**.
+
+Por lo tanto, si las demás variables permanecen constantes y las pruebas adicionales reducen efectivamente los defectos remanentes:
+
+- Se incrementa el incentivo económico para ejecutar más actividades de V&V antes de liberar.
+- El punto de equilibrio se desplaza hacia un **mayor esfuerzo o tiempo óptimo de pruebas**.
+- Se vuelve más valioso mejorar el PCE y evitar que defectos alcancen la fase de garantía.
+
+La magnitud del desplazamiento depende de la probabilidad de la multa, su importe, el costo marginal de las pruebas y la eficacia real de detección.
+
+**Matiz:** si existe un plazo contractual rígido y también se penalizan las demoras, la decisión final puede implicar un equilibrio entre multa por calidad y multa por entrega tardía. No corresponde afirmar un aumento ilimitado del tiempo de prueba.
+
+---
+
+## Estado final y pendientes de verificación
+
+### Actividades desarrolladas
+
+Se documentaron los requerimientos de Collatz, la matriz de trazabilidad, las inspecciones, las sesiones de pruebas unitarias y funcionales, el inventario de defectos, el PCE, la densidad, el análisis Kanban, las regresiones, los cálculos de garantía, el conversor y los controles locales de calidad.
+
+### Puntos aún no comprobados completamente contra la consigna
+
+1. **Invocación literal `python json2csv.py`:** la variante ejecutada y probada fue `python -m json2csv`.
+2. **Generación automática con pdoc o Sphinx en cada PR:** no se verificó una integración que cumpla ese requisito.
+3. **Reglas PEP 257:** falta una comprobación específica de docstrings con las reglas solicitadas.
+4. **Proyección estadística de Collatz:** el dataset de cinco defectos no permite una estimación robusta del total latente.
+5. **Artículos externos de Kanban, garantía y deuda técnica:** algunas interpretaciones se apoyaron en materiales y discusiones de clase; para referencias documentales exactas corresponde contrastar los artículos originales.
+
+Se deja constancia de estas limitaciones para distinguir los requisitos **implementados y observados** de aquellos que todavía requieren comprobación adicional.
