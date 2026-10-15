@@ -27,12 +27,16 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e .
           python -m pip install -r requirements.txt
+          python -m pip install pdoc pydocstyle
 
       - name: Ruff
         run: python -m ruff check src tests
 
       - name: Black
         run: python -m black --check src tests
+
+      - name: Verificar PEP257
+        run: python -m pydocstyle src/json2csv
 
       - name: MyPy
         run: python -m mypy src/json2csv
@@ -45,3 +49,12 @@ jobs:
 
       - name: Bandit
         run: python -m bandit -r src/json2csv
+
+      - name: Generar documentacion automatica
+        run: python -m pdoc ./src/json2csv --output-directory docs/api-generated
+
+      - name: Publicar documentacion como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentacion-json2csv
+          path: json2csv/docs/api-generated/
