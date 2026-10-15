@@ -1,0 +1,5 @@
+[
+  {"nombre": "Juan", "edad": 25, "ciudad": "Parana"},
+  {"nombre": "Pedro", "edad": 30, "ciudad": "Concepcion del Uruguay"},
+  {"nombre": "Ana", "edad": 22, "ciudad": "Colon"}
+]

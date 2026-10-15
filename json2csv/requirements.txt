@@ -1,0 +1,8 @@
+-e .
+pytest
+pytest-cov
+ruff
+black
+mypy
+pyright
+bandit
